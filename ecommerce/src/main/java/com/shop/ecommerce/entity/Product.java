@@ -2,7 +2,9 @@ package com.shop.ecommerce.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
+import org.springframework.stereotype.Component;
 
+@Component
 @Entity
 public class Product extends Tracking {
     @Id
@@ -18,6 +20,7 @@ public class Product extends Tracking {
     private boolean is_deleted;
     private boolean is_archived;
     private String image;
+
 
     public boolean isIs_deleted() {
         return is_deleted;
@@ -83,6 +86,8 @@ public class Product extends Tracking {
         this.category = category;
     }
 
+
+
     public String getImage() {
         return image;
     }
@@ -137,4 +142,19 @@ public class Product extends Tracking {
 
 
     public Product() {}
+
+    @Override
+    public String toString() {
+        return "Product{" +
+                "id=" + id +
+                ", name='" + name + '\'' +
+                ", price=" + price +
+                ", description='" + description + '\'' +
+                ", stock=" + stock +
+                ", category=" + category +
+                ", is_deleted=" + is_deleted +
+                ", is_archived=" + is_archived +
+                ", image='" + image + '\'' +
+                '}';
+    }
 }

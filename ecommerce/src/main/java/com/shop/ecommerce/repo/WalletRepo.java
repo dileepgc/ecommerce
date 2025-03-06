@@ -1,5 +1,6 @@
 package com.shop.ecommerce.repo;
 
+import com.shop.ecommerce.entity.User;
 import com.shop.ecommerce.entity.Wallet;
 import com.shop.ecommerce.entity.WalletAudit;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -12,4 +13,5 @@ import java.util.List;
 public interface WalletRepo extends JpaRepository<Wallet,Integer> {
     Wallet findByUserId(int userId);
 
+    public Wallet findByUser(User user);
 }

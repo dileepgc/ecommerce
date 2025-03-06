@@ -12,6 +12,7 @@ import org.hibernate.annotations.UpdateTimestamp;
         private String updated_at;
 
         private boolean is_deleted;
+        private boolean is_archived;
 
         private String created_by="Admin";
         private String updated_by="Admin";
@@ -34,11 +35,19 @@ import org.hibernate.annotations.UpdateTimestamp;
         }
 
         public boolean isIs_deleted() {
-            return is_deleted=false;
+            return is_deleted;
         }
 
         public void setIs_deleted(boolean is_deleted) {
             this.is_deleted = is_deleted;
+        }
+
+        public boolean isIs_archived() {
+            return is_archived;
+        }
+
+        public void setIs_archived(boolean is_archived) {
+            this.is_archived = is_archived;
         }
 
         public String getCreated_by() {

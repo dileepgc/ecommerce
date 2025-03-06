@@ -1,10 +1,14 @@
 package com.shop.ecommerce.DTO;
 
+import jakarta.validation.constraints.NotNull;
+
 public class SignUpDTO {
     String FirstName;
     String lastName;
     String role;
+    @NotNull
     String email;
+    @NotNull
     String password;
 
     public String getFirstName() {

@@ -16,19 +16,12 @@ public class User extends Tracking {
     @JsonProperty("Email")
     private String email;
     private String password;
-
-
-
     private String role;
 
 
-
-
-    @OneToMany(cascade = CascadeType.ALL)
+    @OneToMany(cascade = CascadeType.ALL,fetch = FetchType.EAGER)
     @JsonIgnore
     private List<Order> ord;
-
-
 
     public User(String firstName, String lastName, String password, String role,String email) {
         this.firstName=firstName;
@@ -38,13 +31,7 @@ public class User extends Tracking {
         this.email=email;
     }
 
-//    public User(String firstName, String lastName, String password, String role, Object o, String email) {
-//        this.firstName=firstName;
-//        this.lastName=lastName;
-//        this.password=password;
-//        this.role=role;
-//        this.email=email;
-//    }
+
 
     public List<Order> getOrd() {
         return ord;
@@ -132,5 +119,16 @@ public class User extends Tracking {
     public void setWallet(Wallet wallet) {
     }
 
-
+    @Override
+    public String toString() {
+        return "User{" +
+                "id=" + id +
+                ", firstName='" + firstName + '\'' +
+                ", lastName='" + lastName + '\'' +
+                ", email='" + email + '\'' +
+                ", password='" + password + '\'' +
+                ", role='" + role + '\'' +
+                ", ord=" + ord +
+                '}';
+    }
 }

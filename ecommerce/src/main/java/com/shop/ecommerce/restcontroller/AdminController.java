@@ -3,8 +3,10 @@ package com.shop.ecommerce.restcontroller;
 import com.shop.ecommerce.DTO.AddCategoryDTO;
 import com.shop.ecommerce.DTO.AddProductDTO;
 import com.shop.ecommerce.DTO.AdminLoginDTO;
+import com.shop.ecommerce.DTO.PromocodeDTO;
 import com.shop.ecommerce.entity.Category;
 import com.shop.ecommerce.entity.Product;
+import com.shop.ecommerce.service.AdminService;
 import com.shop.ecommerce.serviceimpl.AdminServiceimpl;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,7 +18,8 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/admin")
 public class AdminController {
     @Autowired
-    AdminServiceimpl as;
+    AdminService as;
+
 //    @PostMapping("/signup")
 //    public ResponseEntity<Admin> signUp(@RequestParam("name")String name,@RequestParam("email")String email,@RequestParam("password")String password)
 //    {
@@ -38,11 +41,15 @@ public class AdminController {
         @PostMapping("/login")
         public ResponseEntity login (@RequestBody AdminLoginDTO a, HttpSession session)
         {
-            boolean b = as.login(a, session);
-            if (b) {
-                return ResponseEntity.status(HttpStatus.OK).body("Login Succesfull");
-            } else {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid or already login Credentials");
+            try {
+                boolean b = as.login(a, session);
+                if (b) {
+                    return ResponseEntity.status(HttpStatus.OK).body("Login Succesfull");
+                } else {
+                    return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid or already login Credentials");
+                }
+            } catch (RuntimeException e) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(""+e.getMessage());
             }
         }
 
@@ -80,7 +87,7 @@ public class AdminController {
         @PostMapping("/deleteproduct/{id}")
         public ResponseEntity deleteProduct ( @PathVariable int id, HttpSession session)
         {
-            return new ResponseEntity(as.deleteProduct(id, session), HttpStatus.OK);
+            return as.deleteProduct(id,session);
         }
 
         //fetching all categoties
@@ -88,7 +95,6 @@ public class AdminController {
         public ResponseEntity getAllCategories ()
         {
             return new ResponseEntity(as.getAllCategories(), HttpStatus.OK);
-
         }
         @GetMapping("/allproducts")
         public ResponseEntity allProducts ()
@@ -109,8 +115,54 @@ public class AdminController {
         @PostMapping("/addstock{id}")
         public ResponseEntity addStock ( @RequestBody int newstock, @PathVariable int id, HttpSession session)
         {
+
             return new ResponseEntity(as.adNewStock(newstock, id, session), HttpStatus.OK);
+
+
         }
+        @GetMapping("/productdetails")
+        public ResponseEntity getProdDetails(@RequestParam int id,HttpSession session)
+        {
+           return as.getProdDetails(id,session);
+        }
+
+        //manage Users by admin
+    @GetMapping("/allusers")
+    public ResponseEntity allUsers(HttpSession session)
+    {
+
+            return new ResponseEntity(as.allUsers(session), HttpStatus.OK);
+
+    }
+    @PostMapping("/deleteuser")
+    public  ResponseEntity deleteUser(@RequestParam int id,HttpSession session)
+    {
+
+            return new ResponseEntity(as.deleteUser(id,session), HttpStatus.OK);
+
+    }
+    @GetMapping("/prodbycategory")
+    public ResponseEntity prodByCategory(@RequestParam int cate_id,HttpSession session)
+    {
+        return as.getProdByCate(cate_id,session);
+    }
+    @PostMapping("/orderstatus")
+    public ResponseEntity changeStatus(@RequestParam int order_id,@RequestParam String status,HttpSession session)
+    {
+       return as.changeStatus(order_id,status,session);
+    }
+    @PostMapping("/productpromocode")
+    public ResponseEntity productPromo(@RequestBody PromocodeDTO promocodeDTO,HttpSession session)
+    {
+       return as.newPromocode(promocodeDTO,session);
+    }
+    @PostMapping("/orderpromocaode")
+    public ResponseEntity orderPromocode(@RequestParam String code,@RequestParam int discount,HttpSession session)
+    {
+        return as.orderPromocode(code,discount,session);
+    }
+
+
 
 
 

@@ -5,17 +5,21 @@ import org.springframework.stereotype.Component;
 
 @Component
 @Entity
-public class Transaction extends Tracking {
-    @Id
+public class OrderStatus extends Tracking {
+  @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
-    @ManyToOne
+   @OneToOne
     private Order order;
+   private String status;
 
-    private String status;
-    private double amount;
+    public int getId() {
+        return id;
+    }
 
-
+    public void setId(int id) {
+        this.id = id;
+    }
 
     public Order getOrder() {
         return order;
@@ -33,27 +37,12 @@ public class Transaction extends Tracking {
         this.status = status;
     }
 
-    public int getId() {
-        return id;
-    }
-
-    public void setId(int id) {
-        this.id = id;
-    }
-
-    public double getAmount() {
-        return amount;
-    }
-
-    public void setAmount(double amount) {
-        this.amount = amount;
-    }
-
-    public Transaction() {
-    }
-    public Transaction(int id, Order order, String status) {
+    public OrderStatus(int id, Order order, String status) {
         this.id = id;
         this.order = order;
         this.status = status;
+    }
+
+    public OrderStatus() {
     }
 }

@@ -2,7 +2,9 @@ package com.shop.ecommerce.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
+import org.springframework.stereotype.Component;
 
+@Component
 @Entity
 public class WalletAudit extends Tracking {
     @Id

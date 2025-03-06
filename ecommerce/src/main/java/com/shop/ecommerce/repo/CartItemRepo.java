@@ -1,5 +1,6 @@
 package com.shop.ecommerce.repo;
 
+import com.shop.ecommerce.entity.Cart;
 import com.shop.ecommerce.entity.CartItem;
 import com.shop.ecommerce.entity.Product;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -9,14 +10,8 @@ import java.util.List;
 
 @Component
 public interface CartItemRepo extends JpaRepository<CartItem,Integer> {
-    public CartItem findByProduct(Product product);
 
+    public List<CartItem> findByCart(Cart cart);
 
-    List<CartItem> findByCartId(int cartId);
-
-
-
-
-
-    List<CartItem> findAllByCartId(int cartId);
+    CartItem findByProduct(Product product);
 }

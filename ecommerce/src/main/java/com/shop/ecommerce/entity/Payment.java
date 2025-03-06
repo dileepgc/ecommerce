@@ -1,35 +1,20 @@
 package com.shop.ecommerce.entity;
 
 import jakarta.persistence.*;
-import org.hibernate.annotations.CreationTimestamp;
-import org.w3c.dom.stylesheets.LinkStyle;
+import org.springframework.stereotype.Component;
 
-import java.util.List;
-
+@Component
 @Entity
-public class Payment extends Tracking{
+public class Payment {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
-    private double amount;
-
-    @CreationTimestamp
-    private String paymentDate;
 
     @OneToOne
+    private Transaction transaction;
+    @OneToOne
     private Order order;
-
-    @OneToMany(mappedBy = "payment", cascade = CascadeType.ALL)
-    private List<Transaction> transactions;
-
-
-    public int getId() {
-        return id;
-    }
-
-    public void setId(int id) {
-        this.id = id;
-    }
+    private double amount;
 
     public double getAmount() {
         return amount;
@@ -39,14 +24,22 @@ public class Payment extends Tracking{
         this.amount = amount;
     }
 
-    public String getPaymentDate() {
-        return paymentDate;
+    public int getId() {
+        return id;
     }
 
-    public void setPaymentDate(String paymentDate) {
-        this.paymentDate = paymentDate;
+    public void setId(int id) {
+        this.id = id;
     }
-    @ManyToOne
+
+    public Transaction getTransaction() {
+        return transaction;
+    }
+
+    public void setTransaction(Transaction transaction) {
+        this.transaction = transaction;
+    }
+
     public Order getOrder() {
         return order;
     }
@@ -55,10 +48,9 @@ public class Payment extends Tracking{
         this.order = order;
     }
 
-    public Payment(int id, double amount, String paymentDate, Order order) {
+    public Payment(int id, Transaction transaction, Order order) {
         this.id = id;
-        this.amount = amount;
-        this.paymentDate = paymentDate;
+        this.transaction = transaction;
         this.order = order;
     }
 

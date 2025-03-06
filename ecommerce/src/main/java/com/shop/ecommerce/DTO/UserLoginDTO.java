@@ -1,19 +1,8 @@
 package com.shop.ecommerce.DTO;
 
-import org.springframework.stereotype.Component;
-
-@Component
-public class AdminLoginDTO {
+public class UserLoginDTO {
     String email;
     String password;
-
-
-
-    public AdminLoginDTO(String email, String password) {
-        this.email = email;
-        this.password = password;
-
-    }
 
     public String getEmail() {
         return email;
@@ -32,6 +21,6 @@ public class AdminLoginDTO {
     }
 
 
-    public AdminLoginDTO() {
-    }
+
+
 }

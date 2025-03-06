@@ -3,7 +3,9 @@ package com.shop.ecommerce.entity;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 @Entity
 public class Cart extends Tracking {
@@ -14,13 +16,21 @@ public class Cart extends Tracking {
     @OneToOne
     private User u;
 
-    @OneToMany(mappedBy = "cart",cascade = CascadeType.ALL)
-    @JsonIgnore
+
+
+    @OneToMany(mappedBy = "cart", cascade = CascadeType.ALL)
     private List<CartItem> cartItem;
 
     private int quantity;
     private double total_amount;
 
+    public List<CartItem> getCartItem() {
+        return cartItem;
+    }
+
+    public void setCartItem(List<CartItem> cartItem) {
+        this.cartItem = cartItem;
+    }
 
     public int getId() {
         return id;
@@ -38,13 +48,7 @@ public class Cart extends Tracking {
         this.u = u;
     }
 
-    public List<CartItem> getCartItem() {
-        return cartItem;
-    }
 
-    public void setCartItem(List<CartItem> cartItem) {
-        this.cartItem = cartItem;
-    }
 
     public int getQuantity() {
         return quantity;

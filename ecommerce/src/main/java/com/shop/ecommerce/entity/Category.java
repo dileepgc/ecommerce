@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 
 import java.util.List;
 @Entity
+
 public class Category extends Tracking {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -56,13 +57,13 @@ public class Category extends Tracking {
         product.setCategory(null);
     }
 
-    @Override
-    public String toString() {
-        return "Category{" +
-                "cate_id=" + cate_id +
-                ", cate_name='" + cate_name + '\'' +
-                ", products=" + products +
-                '}';
-    }
+//    @Override
+//    public String toString() {
+//        return "Category{" +
+//                "cate_id=" + cate_id +
+//                ", cate_name='" + cate_name + '\'' +
+//                ", products=" + products +
+//                '}';
+//    }
 
 }

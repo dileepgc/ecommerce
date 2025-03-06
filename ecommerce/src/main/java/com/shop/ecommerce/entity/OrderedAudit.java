@@ -2,15 +2,17 @@ package com.shop.ecommerce.entity;
 
 import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
+import org.springframework.stereotype.Component;
 
+@Component
 @Entity
 public class OrderedAudit extends Tracking{
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
-    private String action;
-    @CreationTimestamp
-    private String created_at;
+    private String previous_audit;
+    private String present_status;
+
 
     @ManyToOne(cascade = CascadeType.ALL)
     private Order order;
@@ -23,21 +25,7 @@ public class OrderedAudit extends Tracking{
         this.id = id;
     }
 
-    public String getAction() {
-        return action;
-    }
 
-    public void setAction(String action) {
-        this.action = action;
-    }
-
-    public String getCreated_at() {
-        return created_at;
-    }
-
-    public void setCreated_at(String created_at) {
-        this.created_at = created_at;
-    }
 
     public Order getOrder() {
         return order;
@@ -47,10 +35,32 @@ public class OrderedAudit extends Tracking{
         this.order = order;
     }
 
-    public OrderedAudit(int id, String action, String created_at, Order order) {
+    public String getPrevious_audit() {
+        return previous_audit;
+    }
+
+    public void setPrevious_audit(String previous_audit) {
+        this.previous_audit = previous_audit;
+    }
+
+    public String getPresent_status() {
+        return present_status;
+    }
+
+    public void setPresent_status(String present_status) {
+        this.present_status = present_status;
+    }
+
+    public OrderedAudit(int id, Order order) {
         this.id = id;
-        this.action = action;
-        this.created_at = created_at;
+
+        this.order = order;
+    }
+
+    public OrderedAudit(int id, String previous_audit, String present_status, Order order) {
+        this.id = id;
+        this.previous_audit = previous_audit;
+        this.present_status = present_status;
         this.order = order;
     }
 

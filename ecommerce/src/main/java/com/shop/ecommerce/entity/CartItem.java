@@ -13,10 +13,20 @@ public class CartItem extends Tracking{
     @ManyToOne
     @JsonIgnore
     private Cart cart;
-    @OneToOne
+    @ManyToOne
+    @JsonIgnore
     private Product product;
     private int quantity;
 
+    @Override
+    public String toString() {
+        return "CartItem{" +
+                "id=" + id +
+                ", cart=" + cart +
+                ", product=" + product +
+                ", quantity=" + quantity +
+                '}';
+    }
 
     public int getId() {
         return id;

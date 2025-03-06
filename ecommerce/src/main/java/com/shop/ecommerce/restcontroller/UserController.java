@@ -1,9 +1,13 @@
 package com.shop.ecommerce.restcontroller;
 
+import com.shop.ecommerce.DTO.ProdToCart;
 import com.shop.ecommerce.DTO.SignUpDTO;
+import com.shop.ecommerce.DTO.UserLoginDTO;
 import com.shop.ecommerce.entity.AddProduct;
 import com.shop.ecommerce.entity.User;
 
+import com.shop.ecommerce.service.AdminService;
+import com.shop.ecommerce.service.UserService;
 import com.shop.ecommerce.serviceimpl.AdminServiceimpl;
 import com.shop.ecommerce.serviceimpl.UserServiceimpl;
 import jakarta.servlet.http.HttpSession;
@@ -16,9 +20,9 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/user")
 public class UserController {
     @Autowired
-    UserServiceimpl us;
+    UserService us;
     @Autowired
-    AdminServiceimpl as;
+    AdminService as;
 
     @PostMapping("/signup")
     public ResponseEntity<Object> signUp(@RequestBody SignUpDTO signUpDTO) {
@@ -32,6 +36,14 @@ public class UserController {
         }
 
     }
+    @GetMapping("/myprofile")
+    public ResponseEntity<Object> myProfile(HttpSession session)
+    {
+
+            return us.myProfile(session);
+
+
+    }
 
     @PatchMapping("/update/{id}")
     public ResponseEntity updateUser(@RequestBody User u, @PathVariable("id") int id) {
@@ -39,8 +51,8 @@ public class UserController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity userLogin(@RequestBody User u, HttpSession session) {
-        return new ResponseEntity(us.loginUser(u, session), HttpStatus.OK);
+    public ResponseEntity userLogin(@RequestBody UserLoginDTO userLoginDTO, HttpSession session) {
+        return new ResponseEntity(us.loginUser(userLoginDTO, session), HttpStatus.OK);
     }
 
     @PostMapping("/logout")
@@ -48,25 +60,50 @@ public class UserController {
         return new ResponseEntity(us.userLogout(session), HttpStatus.OK);
     }
 
-    @PostMapping("/getallproducts")
+    @GetMapping("/getallproducts")
     public ResponseEntity getProducts(HttpSession session) {
 
         return new ResponseEntity(as.getAllProducts(), HttpStatus.OK);
     }
 
-    @PostMapping("/getallcategories")
+    @GetMapping("/getallcategories")
     public ResponseEntity getcategories(HttpSession session) {
         return new ResponseEntity(as.getAllCategories(), HttpStatus.OK);
     }
+    @GetMapping("/viewbalance")
+    public ResponseEntity viewBalance( HttpSession session)
+    {
+        try{
+            return new ResponseEntity(us.viewwallet(session),HttpStatus.OK) ;
+        } catch (RuntimeException e) {
+            return new ResponseEntity<>(""+e.getMessage(),HttpStatus.OK);
+        }
+    }
 
-    @PostMapping("/addproduct/{id}")
-    public ResponseEntity addproduct(@PathVariable int id, @RequestBody AddProduct pdetails, HttpSession session)
+    @PostMapping("/addproducttocart")
+    public ResponseEntity addproduct( @RequestBody ProdToCart pdetails, HttpSession session)
     {
-        return new ResponseEntity(us.addproduct(id,pdetails,session),HttpStatus.OK);
+        return new ResponseEntity(us.addproductToCart(pdetails,session),HttpStatus.OK);
     }
-    @PostMapping("/order/{id}")
-        public ResponseEntity doOrder(@PathVariable int id, HttpSession session)
+    @PostMapping("/do_order")
+        public <address> ResponseEntity doOrder(@RequestParam String address, HttpSession session)
     {
-        return new ResponseEntity(us.doOrder(id,session),HttpStatus.OK);
+        return new ResponseEntity(us.doOrder(address,session),HttpStatus.OK);
     }
+    @GetMapping("/productdetails")
+    public ResponseEntity getProdDetails(@RequestParam int id,HttpSession session)
+    {
+        return as.getProdDetails(id,session);
+    }
+    @GetMapping("/prodincart")
+    public  ResponseEntity getProdInCart(HttpSession session)
+    {
+        return us.getProdinCart(session);
+    }
+    @GetMapping("/fetchorders")
+    public ResponseEntity getOrders(HttpSession session)
+    {
+       return  us.getOrders(session);
+    }
+
 }
