@@ -5,6 +5,15 @@ public class AddProductDTO {
     double price;
     int stock;
     String description;
+    String imageURL;
+
+    public String getImageURL() {
+        return imageURL;
+    }
+
+    public void setImageURL(String imageURL) {
+        this.imageURL = imageURL;
+    }
 
     public String getProd_name() {
         return prod_name;

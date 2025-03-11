@@ -164,6 +164,7 @@ public class AdminServiceimpl implements AdminService {
         product.setStock(addProductDTO.getStock());
         product.setName(addProductDTO.getProd_name());
         product.setPrice(addProductDTO.getPrice());
+        product.setImage(addProductDTO.getImageURL());
         product.setDescription(addProductDTO.getDescription());
         product.setCategory(category); // Set category for the product
 
