@@ -23,4 +23,7 @@ public interface UserService {
 
 
     public ResponseEntity getOrders(HttpSession session);
+
+
+    ResponseEntity cancelOrder(int orderId,HttpSession session);
 }
