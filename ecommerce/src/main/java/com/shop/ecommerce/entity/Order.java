@@ -20,6 +20,7 @@ public class Order extends Tracking {
     private String name;
 
     private double totalAmount;
+    private double amountBeforeDiscount;
 
     @OneToMany(mappedBy = "order",cascade = CascadeType.ALL)
     @JsonIgnore
@@ -104,6 +105,13 @@ public class Order extends Tracking {
         this.totalAmount = totalAmount;
     }
 
+    public double getAmountBeforeDiscount() {
+        return amountBeforeDiscount;
+    }
+
+    public void setAmountBeforeDiscount(double amountBeforeDiscount) {
+        this.amountBeforeDiscount = amountBeforeDiscount;
+    }
 
     public Payment getPayment() {
         return payment;
@@ -125,4 +133,6 @@ public class Order extends Tracking {
     public List<Transaction> getTransaction() {
         return transaction;
     }
+
+
 }

@@ -7,7 +7,6 @@ import com.shop.ecommerce.Exception.GlobalException;
 import com.shop.ecommerce.entity.*;
 import com.shop.ecommerce.repo.*;
 import com.shop.ecommerce.service.UserService;
-import jakarta.servlet.ServletContext;
 import jakarta.servlet.http.HttpSession;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,8 +15,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 
-
-import java.util.Enumeration;
 import java.util.List;
 import java.util.regex.Pattern;
 
@@ -352,10 +349,7 @@ public class UserServiceimpl implements UserService {
     @Transactional
     public Object doOrder(String address, HttpSession session) {
         try {
-//            System.out.println("session.getCreationTime()------>"+session.getCreationTime()+"\nsession.getId()-------->"+
-//                    session.getId()+"\nsession.getLastAccessedTime()------->"+session.getLastAccessedTime()+
-//                    "\ngetServletContext()------>"+ session.getServletContext()+"\ngetMaxInactiveInterval--->"+session.getMaxInactiveInterval()+
-//                    "\nObject getAttribute(String s)-->");
+//
             if (session.getAttribute("user") == null) {
                 throw new GlobalException("User must login first");
             }
@@ -368,46 +362,52 @@ public class UserServiceimpl implements UserService {
             if (cart == null) {
                 return "Cart not found for user";
             }
-            Promocode promocode=promocodeRepo.findById(1).orElse(null);
-            Product product1 = promocode.getProduct();
+
+
 
 
 
             //total amount before applying promocode
             double totalAmount = cart.getTotal_amount();
+            double amountBeforeDiscount=totalAmount;
             System.out.println("total amount before discount-------->" + totalAmount);
             List<CartItem> cartItems = cartItemRepo.findByCart(cart);
 
+            Promocode promocode=promocodeRepo.findById(1).orElse(null);
+            if(promocode!=null) {
+                Product product1 = promocode.getProduct();
 
-            CartItem cartItem1=cartItemRepo.findByProduct(product1);
+                CartItem cartItem1 = cartItemRepo.findByProduct(product1);
 
-            if (cartItems.contains(cartItem1) && promocode.isExpiredStatus() == false) {
-                System.out.println("=************************************************888");
-                int quantity = cartItemRepo.findByProduct(product1).getQuantity();
-                double priceBeforePromocode = quantity * product1.getPrice();
-                System.out.println( "product full quan price before discount"+priceBeforePromocode);
-                double disc=(product1.getPrice() * ((double) promocode.getDiscount() / 100));
-                System.out.println("disc------>"+disc);//5
-                double discountedPricePerPiece = product1.getPrice()-disc;
-                System.out.println(discountedPricePerPiece);//95
-                double discountedPrice = quantity * discountedPricePerPiece;
-                System.out.println(discountedPrice);//1140
-                totalAmount = totalAmount - priceBeforePromocode;//0
-                totalAmount = totalAmount + discountedPrice;//1140
-                result = result + "product promo code applied of code: " + promocode.getCode();
-
-
+                if (cartItems.contains(cartItem1) && promocode.isExpiredStatus() == false) {
+                    System.out.println("=************************************************888");
+                    int quantity = cartItemRepo.findByProduct(product1).getQuantity();
+                    double priceBeforePromocode = quantity * product1.getPrice();
+                    System.out.println("product full quan price before discount" + priceBeforePromocode);
+                    double disc = (product1.getPrice() * ((double) promocode.getDiscount() / 100));
+                    System.out.println("disc------>" + disc);//5
+                    double discountedPricePerPiece = product1.getPrice() - disc;
+                    System.out.println(discountedPricePerPiece);//95
+                    double discountedPrice = quantity * discountedPricePerPiece;
+                    System.out.println(discountedPrice);//1140
+                    totalAmount = totalAmount - priceBeforePromocode;//0
+                    totalAmount = totalAmount + discountedPrice;//1140
+                    result = result + "product promo code applied of code: " + promocode.getCode();
+                }
             }
+
+
             OrderPromocode orderPromocode=orderPromocodeRepo.findById(1).orElse(null);
+            if(orderPromocode!=null) {
 
-            if (totalAmount > 1000 && orderPromocode.isExpireStatus()==false) {
-                double discount = (double) orderPromocode.getDiscount() /100;
-                double discountedPrice = totalAmount * discount;
+                if (totalAmount > 1000 && orderPromocode.isExpireStatus() == false) {
+                    double discount = (double) orderPromocode.getDiscount() / 100;
+                    double discountedPrice = totalAmount * discount;
 
-                totalAmount = totalAmount - (discountedPrice);//1083
-                result += " Order promo code applied of code" + orderPromocode.getCode();
+                    totalAmount = totalAmount - (discountedPrice);//1083
+                    result += " Order promo code applied of code" + orderPromocode.getCode();
+                }
             }
-
             if (cartItems.isEmpty()) {
                 return "Cart is empty";
             }
@@ -427,6 +427,7 @@ public class UserServiceimpl implements UserService {
                 orderedItems.setName(cartItem.getProduct().getName());
                 orderedItems.setPrice(cartItem.getProduct().getPrice());
                 orderedItems.setQuantity(cartItem.getQuantity());
+                orderedItems.setProduct(cartItem.getProduct());
                 Product product = cartItem.getProduct();
                 if(cartItem.getQuantity()>product.getStock())
                 {
@@ -445,13 +446,13 @@ public class UserServiceimpl implements UserService {
             order.setOrderedStatus("order placed successfully");
             order.setPayment(payment);
             order.setAddress(address);
+            order.setAmountBeforeDiscount(amountBeforeDiscount);
             orderRepo.save(order);
 
             orderedAudit.setOrder(order);
             orderStatus.setOrder(order);
             orderStatus.setStatus(" placed");
             orderStatusRepo.save(orderStatus);
-
 
             transaction.setOrder(order);
             transaction.setStatus("Success");
@@ -528,5 +529,76 @@ public class UserServiceimpl implements UserService {
         }
     }
 
+    @Transactional
+     public ResponseEntity cancelOrder(int orderId,HttpSession session)
+    {
+        try {
+            if (session.getAttribute("user") == null) {
+                throw new GlobalException("User must login first");
+            }
+            User user = (User) session.getAttribute("user");
 
+            Order order= orderRepo.findById(orderId).orElse(null);
+            if(order==null )
+            {
+                throw new GlobalException("Order not found");
+            }
+            if(order.getUser().getId()!=user.getId() )
+            {
+                throw new GlobalException("This order does not belongs to logged in user");
+            }
+            if(order.getOrderedStatus().equalsIgnoreCase("completed"))
+            {
+                throw new GlobalException("Order delivery completed You cannot cancel");
+            }
+            if(order.getAmountBeforeDiscount()!=order.getTotalAmount())
+            {
+                throw new GlobalException("Promo code applied orders cannot be cancelled");
+            }
+            Wallet wallet=walletRepo.findByUserId(user.getId());
+            wallet.setBalance(wallet.getBalance()+order.getTotalAmount());
+            WalletAudit walletAudit1=new WalletAudit();
+            walletAudit1.setDiffamount("+"+order.getTotalAmount());
+            walletAudit1.setWallet(wallet);
+            walletRepo.save(wallet);
+            walletAuditRepo.save(walletAudit1);
+
+
+            order.setOrderedStatus("Cancelled");
+            OrderStatus orderStatus1=orderStatusRepo.findByOrder(order);
+            orderStatus1.setStatus("Cancelled");
+
+
+            List<OrderedAudit> orderedAuditList=orderedAuditRepo.findAllByOrderId(order.getId());
+            OrderedAudit orderedAudit1=orderedAuditList.get(orderedAuditList.size() - 1);
+
+            System.out.println(orderedAudit1);
+            OrderedAudit orderedAudit2=new OrderedAudit();
+            orderedAudit2.setPresent_status("Cancelled");
+            orderedAudit2.setPrevious_audit(orderedAudit2.getPresent_status());
+            orderedAudit2.setOrder(order);
+
+
+            List<OrderedItems> orderedItemsList=orderedItemsRepo.findAllByOrder(order);
+
+            for (OrderedItems orderedItems1:orderedItemsList)
+            {
+                int productId=orderedItems1.getProduct().getId();
+                Product product=productRepo.findById(productId).orElse(null);
+                product.setStock(product.getStock()+orderedItems1.getQuantity());
+                productRepo.save(product);
+            }
+            orderedAuditRepo.save(orderedAudit2);
+            orderStatusRepo.save(orderStatus1);
+
+            orderRepo.save(order);
+            
+
+            return new ResponseEntity("order cancelled successfully",HttpStatus.OK);
+        } catch (GlobalException e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
+        } catch (Exception e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
+        }
+    }
 }

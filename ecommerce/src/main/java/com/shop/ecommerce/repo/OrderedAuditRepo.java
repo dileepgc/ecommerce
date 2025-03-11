@@ -10,4 +10,6 @@ import java.util.List;
 @Component
 public interface OrderedAuditRepo extends JpaRepository<OrderedAudit,Integer> {
     List<OrderedAudit> findAllByOrderId(Order order);
+    List<OrderedAudit> findAllByOrderId(int id);
+
 }

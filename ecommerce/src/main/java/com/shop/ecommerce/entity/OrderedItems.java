@@ -3,7 +3,6 @@ package com.shop.ecommerce.entity;
 import jakarta.persistence.*;
 import org.springframework.stereotype.Component;
 
-import java.util.List;
 @Component
 @Entity
 public class OrderedItems extends Tracking{
@@ -15,9 +14,17 @@ public class OrderedItems extends Tracking{
     private double price ;
     @ManyToOne(cascade = CascadeType.ALL)
     private Order order;
+    @ManyToOne
+    private Product product;
 
 
+    public Product getProduct() {
+        return product;
+    }
 
+    public void setProduct(Product product) {
+        this.product = product;
+    }
 
     public int getQuantity() {
         return quantity;
