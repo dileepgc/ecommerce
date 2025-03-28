@@ -1,14 +1,17 @@
 package com.shop.ecommerce.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+
 @Component
 @Entity
 @Table(name = "orders")
+
 public class Order extends Tracking {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -27,8 +30,17 @@ public class Order extends Tracking {
     private List<OrderedItems> orderedItems;
 
     private String orderedStatus;
-    private String address;
+    @OneToOne
+    @JsonIgnore
+    private Address address;
 
+    public Address getAddress() {
+        return address;
+    }
+
+    public void setAddress(Address address) {
+        this.address = address;
+    }
 
     @OneToMany(mappedBy = "order",cascade = CascadeType.ALL)
     @JsonIgnore
@@ -73,24 +85,9 @@ public class Order extends Tracking {
         return id;
     }
 
-    public String getOrderedStatus() {
-        return orderedStatus;
-    }
-
-    public void setOrderedStatus(String orderedStatus) {
-        this.orderedStatus = orderedStatus;
-    }
 
     public List<OrderedAudit> getOrderedAudit() {
         return orderedAudit;
-    }
-
-    public String getAddress() {
-        return address;
-    }
-
-    public void setAddress(String address) {
-        this.address = address;
     }
 
     public void setOrderedAudit(List<OrderedAudit> orderedAudit) {
@@ -107,6 +104,14 @@ public class Order extends Tracking {
 
     public double getAmountBeforeDiscount() {
         return amountBeforeDiscount;
+    }
+
+    public String getOrderedStatus() {
+        return orderedStatus;
+    }
+
+    public void setOrderedStatus(String orderedStatus) {
+        this.orderedStatus = orderedStatus;
     }
 
     public void setAmountBeforeDiscount(double amountBeforeDiscount) {

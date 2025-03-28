@@ -8,4 +8,5 @@ import java.util.List;
 
 @Component
 public interface PromocodeRepo extends JpaRepository<Promocode,Integer> {
+    Promocode findByCode(String prodPromo);
 }

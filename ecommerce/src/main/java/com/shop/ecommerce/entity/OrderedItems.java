@@ -74,14 +74,7 @@ public class OrderedItems extends Tracking{
         this.order = order;
     }
 
-    public OrderedItems(int id, int quantity, String name, double price, Order order ) {
-        this.id = id;
-        this.quantity = quantity;
-        this.name = name;
-        this.price = price;
-        this.order = order;
 
-    }
 
     public OrderedItems() {
     }

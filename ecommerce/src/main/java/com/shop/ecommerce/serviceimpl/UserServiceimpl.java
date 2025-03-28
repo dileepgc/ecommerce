@@ -1,21 +1,28 @@
 package com.shop.ecommerce.serviceimpl;
 
-import com.shop.ecommerce.DTO.ProdToCart;
-import com.shop.ecommerce.DTO.SignUpDTO;
-import com.shop.ecommerce.DTO.UserLoginDTO;
+import com.shop.ecommerce.DTO.*;
 import com.shop.ecommerce.Exception.GlobalException;
 import com.shop.ecommerce.entity.*;
+import com.shop.ecommerce.helperclasses.GlobalMethod;
 import com.shop.ecommerce.repo.*;
+import com.shop.ecommerce.service.JWTService;
 import com.shop.ecommerce.service.UserService;
 import jakarta.servlet.http.HttpSession;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.RequestBody;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Pattern;
 
 
@@ -25,8 +32,10 @@ import java.util.regex.Pattern;
 public class UserServiceimpl implements UserService {
     @Autowired
     UserRepo userRepo;
+    //    @Autowired
+//    User user;
     @Autowired
-    UserRepo ur;
+    AuthenticationManager authenticationManager;
     @Autowired
     CartRepo cr;
     @Autowired
@@ -79,12 +88,27 @@ public class UserServiceimpl implements UserService {
     PromocodeRepo promocodeRepo;
     @Autowired
     OrderPromocodeRepo orderPromocodeRepo;
+    @Autowired
+    JWTService jwtService;
+    @Autowired
+    GlobalMethod globalMethod;
 
+
+    // This method checks if the provided email has a valid format using regular expressions.
+// It returns true if the email format is correct, otherwise returns false.
 
     public boolean isValidEmail(String email) {
         String emailRegex = "^[a-zA-Z0-9_+&*-]+(?:\\.[a-zA-Z0-9_+&*-]+)*@(?:[a-zA-Z0-9-]+\\.)+[a-zA-Z]{2,7}$";
         return Pattern.matches(emailRegex, email);
     }
+
+    /**
+     * Validates the strength of the provided password. The password must be at least 8 characters long,
+     * contain at least one uppercase letter, one digit, and one special character.
+     *
+     * @param password The password to validate.
+     * @return true if the password meets the required strength, false otherwise.
+     */
 
     public static boolean isValidPassword(String password) {
         if (password.length() < 8) {
@@ -114,491 +138,196 @@ public class UserServiceimpl implements UserService {
         return specialCharacters.indexOf(ch) >= 0;
     }
 
+// This method handles the user sign-up process. It checks if the provided email and username already
+// exist in the database, validates the password format, and saves the new user. It also assigns
+// the user a role and creates associated objects like a wallet and a cart if the user is a regular user.
 
-    public String signUp(SignUpDTO signUpDTO) {
-        System.out.println(signUpDTO.getPassword());
-        User admin = roleRepo.findByRoleName("admin");
-        System.out.println(signUpDTO.getEmail());
-        if (!isValidEmail(signUpDTO.getEmail())) {
-            throw new GlobalException("Email format is not correct");
-        }
-//        if (!isValidPassword(signUpDTO.getPassword())) {
-//            throw new GlobalException("Password is not in valid format");
-//        }
-        if (admin != null && signUpDTO.getRole().equalsIgnoreCase("admin")) {
-            throw new GlobalException("Admin already exists");
-        }
-        User user = new User(signUpDTO.getFirstName(), signUpDTO.getLastName(), signUpDTO.getPassword(), signUpDTO.getRole(), signUpDTO.getEmail());
-        userRepo.save(user);
-        Wallet wallet = new Wallet();
-        Role role = new Role();
-        if (signUpDTO.getRole().equalsIgnoreCase("admin")) {
-            role.setRolename("admin");
-        } else {
-            role.setRolename("User");
-        }
-        role.setUser(user);
-        roleRepo.save(role);
-
-        wallet.setUser(user);//to add user to Wallet
-        wr.save(wallet);
-        WalletAudit walletAudit = new WalletAudit();
-        walletAudit.setWallet(wallet);
-        walletAuditRepo.save(walletAudit);
-
-        Cart cart = new Cart();
-        cart.setU(user);          //to add user to cart
-        cr.save(cart);
-        user.setWallet(wallet);
-
-        ur.save(user);
-
-        return "User account created";
-    }
-
-
-    public String updateUser(User user, int id) {
-        User existingUser = ur.findById(id).orElse(null);
-        if (existingUser == null) {
-            return "User not found ";
-        } else {
-            if (user.getFirstName() != null) existingUser.setName(user.getFirstName());
-            if (user.getLastName() != null) existingUser.setName(user.getLastName());
-            ur.save(existingUser);
-            return "Updated Successfully";
-        }
-    }
-
-    public String loginUser(UserLoginDTO userLoginDTO, HttpSession session) {
-        User u1 = ur.findByEmail(userLoginDTO.getEmail());
-
-        if (session.getAttribute("user") != null) {
-            return "User Already logged in";
-        }
-
-
-        if (u1 == null) {
-            return "Email Does not exist";
-        }
-
-
-        if (u1.getPassword().trim().equals(userLoginDTO.getPassword().trim())) {
-            session.setAttribute("user", u1);
-            return "Login Successfully";
-        }
-
-        return "Incorrect password ";
-    }
-
-    public String userLogout(HttpSession session) {
-        if (session.getAttribute("user") != null) {
-            System.out.println(session.getAttribute("user"));
-            session.invalidate();
-
-            return "User Logged out";
-        }
-        return "user not logged in";
-    }
-
-    public boolean isEmailPresent(String email) {
-        User u = ur.findByEmail(email);
-        if (u == null) {
-            return false;
-        } else {
-            return true;
-        }
-    }
-
-    public ResponseEntity getProdinCart(HttpSession session) {
-        try {
-            if (session.getAttribute("user") == null) {
-                throw new GlobalException("user must log in");
-            }
-            User user = (User) session.getAttribute("user");
-            Cart cart = cartRepo.findByU(user);
-            List<CartItem> cartItems = cartItemRepo.findByCart(cart);
-
-
-            return new ResponseEntity(cartItems, HttpStatus.OK);
-        } catch (GlobalException e) {
-            return new ResponseEntity(e.getMessage(), HttpStatus.OK);
-        }
-
-    }
-
-    public ResponseEntity addproductToCart(ProdToCart pdetails, HttpSession session) {
+    public ResponseEntity signUp(SignUpDTO signUpDTO) {
         try {
 
-            if (session.getAttribute("user") == null) {
-                return new ResponseEntity<>("user must log in", HttpStatus.OK);
+            System.out.println(signUpDTO.getEmail() + "  " + signUpDTO.getUsername() + " " + signUpDTO.getRole());
+            if (signUpDTO.getRole() == null || signUpDTO.getEmail() == null ||
+                    signUpDTO.getUsername() == null || signUpDTO.getPassword() == null || signUpDTO.getPhone() <= 0) {
+                throw new GlobalException("role ,email,username,password and number cannot be null");
             }
-            User user1 = (User) session.getAttribute("user");
-            int user_id = user1.getId();
-
-            int pid = pdetails.getProd_id();
-            int quantity = pdetails.getQuantity();
-            Product product = productRepo.findById(pid).orElse(null);
-            if (product == null) {
-                return new ResponseEntity<>("product does not exist n", HttpStatus.OK);
-
-
+            if (!isValidEmail(signUpDTO.getEmail())) {
+                throw new GlobalException("Email format is not correct");
             }
-
-            CartItem cartItem = cartItemRepo.findByProduct(product);
-            System.out.println(cartItem);
-            if (cartItem == null) {
-                CartItem cartItem1 = new CartItem();
-                cartItem = cartItem1;
-
-                cartItemRepo.save(cartItem);
-
+            User existingEmailUser = userRepo.findByEmail(signUpDTO.getEmail());
+            if (existingEmailUser != null) {
+                throw new GlobalException("Email already exist");
+            }
+            User existingusernameUser = userRepo.findByUsername(signUpDTO.getUsername());
+            if (existingusernameUser != null) {
+                throw new GlobalException("Username already exist");
             }
 
-            cartItem.setProduct(product);
-            cartItemRepo.save(cartItem);
+            if (!isValidPassword(signUpDTO.getPassword())) {
+                throw new GlobalException("Password is not in valid format");
+            }
+            User admin = roleRepo.findByRoleName("admin");
+            if (admin != null && signUpDTO.getRole().equalsIgnoreCase("admin")) {
+                throw new GlobalException("Admin already exists");
+            }
+            User user = new User(signUpDTO.getFirstName(), signUpDTO.getLastName(), signUpDTO.getPassword(),
+                    signUpDTO.getRole(), signUpDTO.getEmail(), signUpDTO.getPhone());
+            userRepo.save(user);
+            BCryptPasswordEncoder encoder = new BCryptPasswordEncoder(12);
+            user.setPassword(encoder.encode(user.getPassword()));
+            user.setUsername(signUpDTO.getUsername());
+            userRepo.save(user);
+            Role role = new Role();
+            if (signUpDTO.getRole().equalsIgnoreCase("admin")) {
+                role.setRolename("admin");
+            } else {
+                role.setRolename("user");
+            }
+            role.setUser(user);
+            roleRepo.save(role);
 
+            if (signUpDTO.getRole().equalsIgnoreCase("user")) {
+                Wallet wallet = new Wallet();
+                wallet.setUser(user);//to add user to Wallet
+                wr.save(wallet);
+                WalletAudit walletAudit = new WalletAudit();
+                walletAudit.setWallet(wallet);
+                walletAuditRepo.save(walletAudit);
 
-            cartItem.setQuantity(cartItem.getQuantity() + quantity);
-            User user = ur.findById(user_id).orElse(null);  // Get User object by ID
-            Cart cart = cartRepo.findByU(user);
+                Cart cart = new Cart();
+                cart.setU(user);
+                cr.save(cart);
+                user.setWallet(wallet);
 
-            cart.setQuantity(cart.getQuantity() + quantity);
-            double totalamount = (product.getPrice() * quantity);
-            cart.setTotal_amount(cart.getTotal_amount() + totalamount);
+                userRepo.save(user);
 
-            cartItemRepo.save(cartItem);
-            cartItem.setCart(cart);
-            cartRepo.save(cart);
+            }
 
-            return new ResponseEntity<>("Product added successfully", HttpStatus.OK);
-
-
+            return new ResponseEntity<>("User account created", HttpStatus.OK);
         } catch (GlobalException e) {
             return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
         } catch (Exception e) {
-            return new ResponseEntity<>("An error occurred", HttpStatus.INTERNAL_SERVER_ERROR);
+            throw new GlobalException(e.getMessage());
         }
     }
-//
-//    public static void main(String[] args) {
-//        UserServiceimpl impl = new UserServiceimpl();
-//        HttpSession session = new HttpSession() {
-//            @Override
-//            public long getCreationTime() {
-//                return 0;
-//            }
-//
-//            @Override
-//            public String getId() {
-//                return "";
-//            }
-//
-//            @Override
-//            public long getLastAccessedTime() {
-//                return 0;
-//            }
-//
-//            @Override
-//            public ServletContext getServletContext() {
-//                return null;
-//            }
-//
-//            @Override
-//            public void setMaxInactiveInterval(int i) {
-//
-//            }
-//
-//            @Override
-//            public int getMaxInactiveInterval() {
-//                return 0;
-//            }
-//
-//            @Override
-//            public Object getAttribute(String s) {
-//                return null;
-//            }
-//
-//            @Override
-//            public Enumeration<String> getAttributeNames() {
-//                return null;
-//            }
-//
-//            @Override
-//            public void setAttribute(String s, Object o) {
-//
-//            }
-//
-//            @Override
-//            public void removeAttribute(String s) {
-//
-//            }
-//
-//            @Override
-//            public void invalidate() {
-//
-//            }
-//
-//            @Override
-//            public boolean isNew() {
-//                return false;
-//            }
-//        };
-//        impl.doOrder("virima",session);
-//    }
 
-    @Transactional
-    public Object doOrder(String address, HttpSession session) {
+    // This method allows a logged-in user to update their profile information (first name, last name, and phone number).
+// It verifies the user's identity using the authorization header and updates the user's details in the database.
+    public ResponseEntity updateUser(User user, String authorizationHeader) {
         try {
-//
-            if (session.getAttribute("user") == null) {
-                throw new GlobalException("User must login first");
+            String token = authorizationHeader.replace("Bearer ", "");
+            String username = jwtService.extractUserName(token);
+            String role = jwtService.extractRole(token);
+            System.out.println(username);
+            if (!role.equalsIgnoreCase("user"))
+                return new ResponseEntity<>("Access denied",HttpStatus.UNAUTHORIZED);
+
+
+            User existingUser = userRepo.findByUsername(username);
+            if (existingUser == null) {
+                return new ResponseEntity<>("User not found ", HttpStatus.OK);
+            } else {
+                if (user.getFirstName() != null) existingUser.setFirstName(user.getFirstName());
+                if (user.getLastName() != null) existingUser.setLastName(user.getLastName());
+                if (user.getPhone() != 0) existingUser.setPhone(user.getPhone());
+                userRepo.save(existingUser);
+                return new ResponseEntity<>("Updated Successfully", HttpStatus.OK);
             }
-            String result = "";
+        } catch (GlobalException e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
+        }
+    }
 
-            User sessionAttribute = (User) session.getAttribute("user");
-            User user = userRepo.findById(sessionAttribute.getId()).orElse(null);
-
-            Cart cart = cartRepo.findByU(user);
-            if (cart == null) {
-                return "Cart not found for user";
-            }
-
-
-
-
-
-            //total amount before applying promocode
-            double totalAmount = cart.getTotal_amount();
-            double amountBeforeDiscount=totalAmount;
-            System.out.println("total amount before discount-------->" + totalAmount);
-            List<CartItem> cartItems = cartItemRepo.findByCart(cart);
-
-            Promocode promocode=promocodeRepo.findById(1).orElse(null);
-            if(promocode!=null) {
-                Product product1 = promocode.getProduct();
-
-                CartItem cartItem1 = cartItemRepo.findByProduct(product1);
-
-                if (cartItems.contains(cartItem1) && promocode.isExpiredStatus() == false) {
-                    System.out.println("=************************************************888");
-                    int quantity = cartItemRepo.findByProduct(product1).getQuantity();
-                    double priceBeforePromocode = quantity * product1.getPrice();
-                    System.out.println("product full quan price before discount" + priceBeforePromocode);
-                    double disc = (product1.getPrice() * ((double) promocode.getDiscount() / 100));
-                    System.out.println("disc------>" + disc);//5
-                    double discountedPricePerPiece = product1.getPrice() - disc;
-                    System.out.println(discountedPricePerPiece);//95
-                    double discountedPrice = quantity * discountedPricePerPiece;
-                    System.out.println(discountedPrice);//1140
-                    totalAmount = totalAmount - priceBeforePromocode;//0
-                    totalAmount = totalAmount + discountedPrice;//1140
-                    result = result + "product promo code applied of code: " + promocode.getCode();
-                }
-            }
+    public ResponseEntity allusers( String authorizationHeader) {
+        try {
+            String token = authorizationHeader.replace("Bearer ", "");
+            String username = jwtService.extractUserName(token);
+            String role = jwtService.extractRole(token);
+            System.out.println(username);
+            if (role.equalsIgnoreCase("user"))
+                return new ResponseEntity<>("Access denied", HttpStatus.UNAUTHORIZED);
 
 
-            OrderPromocode orderPromocode=orderPromocodeRepo.findById(1).orElse(null);
-            if(orderPromocode!=null) {
+            List<User> userList = userRepo.findAll();
+            return new ResponseEntity<>(userList, HttpStatus.OK);
 
-                if (totalAmount > 1000 && orderPromocode.isExpireStatus() == false) {
-                    double discount = (double) orderPromocode.getDiscount() / 100;
-                    double discountedPrice = totalAmount * discount;
+        } catch (GlobalException e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
+        }
+    }
 
-                    totalAmount = totalAmount - (discountedPrice);//1083
-                    result += " Order promo code applied of code" + orderPromocode.getCode();
-                }
-            }
-            if (cartItems.isEmpty()) {
-                return "Cart is empty";
+    // This method authenticates the user based on the provided email and password.
+// If valid, it generates and returns a JWT token. If authentication fails, it returns an error message.
+
+    /**
+     *
+     * @param userLoginDTO
+     * @return
+     */
+    public ResponseEntity loginUser(UserLoginDTO userLoginDTO) {
+        try {
+            Map<String, String> map = new HashMap<String, String>();
+            User user = userRepo.findByEmail(userLoginDTO.getEmail());
+            System.out.println(user);
+
+            if (user == null) {
+                throw new GlobalException("User Does not exist");
             }
 
-            Wallet wallet = walletRepo.findByUser(user);
+            BCryptPasswordEncoder encoder = new BCryptPasswordEncoder(12);
 
-            if (totalAmount > wallet.getBalance()) {
-                transaction.setStatus("Failed");
-                transactionRepo.save(transaction);
-                throw new GlobalException("Insufficient balance");
-            }
-
-            //adding items list
-            for (CartItem cartItem : cartItems) {
-                OrderedItems orderedItems = new OrderedItems();
-                orderedItems.setOrder(order);
-                orderedItems.setName(cartItem.getProduct().getName());
-                orderedItems.setPrice(cartItem.getProduct().getPrice());
-                orderedItems.setQuantity(cartItem.getQuantity());
-                orderedItems.setProduct(cartItem.getProduct());
-                Product product = cartItem.getProduct();
-                if(cartItem.getQuantity()>product.getStock())
+            if (encoder.matches(userLoginDTO.getPassword(), user.getPassword())) {
+                if(user.getRole().equalsIgnoreCase("admin"))
                 {
-                    throw new GlobalException("Stock is not available");
+                    map.put("Message", " Admin Login successful");
+                    map.put("role","admin");
                 }
-                product.setStock(product.getStock() - cartItem.getQuantity());
-                productRepo.save(product);
-
-                orderedItemsRepo.save(orderedItems);
+                else {
+                    map.put("Message", " User Login successful");
+                    map.put("role","user");
+                }
+                Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(user.getUsername(), user.getPassword()));
+                if (authentication.isAuthenticated()) {
+                    map.put("token", jwtService.generateToken(user.getUsername(), user.getRole()));
+                    return new ResponseEntity<>(map, HttpStatus.OK);
+                }
             }
-
-            paymentRepo.save(payment);
-            order.setTotalAmount(totalAmount);
-            order.setName(user.getFirstName() + user.getLastName());
-            order.setUser(user);
-            order.setOrderedStatus("order placed successfully");
-            order.setPayment(payment);
-            order.setAddress(address);
-            order.setAmountBeforeDiscount(amountBeforeDiscount);
-            orderRepo.save(order);
-
-            orderedAudit.setOrder(order);
-            orderStatus.setOrder(order);
-            orderStatus.setStatus(" placed");
-            orderStatusRepo.save(orderStatus);
-
-            transaction.setOrder(order);
-            transaction.setStatus("Success");
-            transaction.setAmount(totalAmount);
-            transactionRepo.save(transaction);
-
-
-            orderedAudit.setPresent_status(orderStatus.getStatus());
-            orderedAuditRepo.save(orderedAudit);
-
-            payment.setOrder(order);
-            payment.setTransaction(transaction);
-            paymentRepo.save(payment);
-            //updating balance in wallet
-            double remaining = (wallet.getBalance() - totalAmount);
-            wallet.setBalance(remaining);
-            walletRepo.save(wallet);
-            //updating in walletaudit
-            walletAudit.setDiffamount("-" + totalAmount);
-            walletAudit.setWallet(wallet);
-            walletAuditRepo.save(walletAudit);
-
-
-            for (CartItem cartItem : cartItems) {
-                cartItemRepo.delete(cartItem);
-            }
-
-            cart.setQuantity(0);
-            cart.setTotal_amount(0);
-            cartRepo.save(cart);
-            result = result + "Order placed successfully";
-            return new ResponseEntity<>(result, HttpStatus.OK);
+            return new ResponseEntity<>("login failed due to wrong password", HttpStatus.UNAUTHORIZED);
         } catch (GlobalException e) {
-            return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
-        } catch (Exception e) {
-            return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
+            return new ResponseEntity(e.getMessage(), HttpStatus.UNAUTHORIZED);
         }
-
     }
 
-    public String viewwallet(HttpSession session) {
 
-        if (session.getAttribute("user") == null) {
-            throw new GlobalException("User must login first");
-        }
-        User user = (User) session.getAttribute("user");
-        Wallet wallet = walletRepo.findByUserId(user.getId());
-        return wallet.getUser().getFirstName() + " wallet balance is" + wallet.getBalance();
-    }
 
-    public ResponseEntity<Object> myProfile(HttpSession session) {
-        if (session.getAttribute("user") == null) {
-            throw new GlobalException("User must login first");
-        }
-        User user = (User) session.getAttribute("user");
-        System.out.println(user);
 
-        return new ResponseEntity<>(user, HttpStatus.OK);
-    }
-
-    public ResponseEntity getOrders(HttpSession session) {
+    // This method retrieves the profile details of the currently authenticated user, including their first name,
+// last name, username, email, phone number, and wallet balance. The user must be logged in and provide a valid JWT token.
+    public ResponseEntity<Object> myProfile(String authorizationHeader) {
         try {
-            if (session.getAttribute("user") == null) {
-                throw new GlobalException("User must login first");
-            }
-            User user = (User) session.getAttribute("user");
+            GlobalMethodDTO globalMethodDTO = globalMethod.adminAccess(authorizationHeader);
+            String username = globalMethodDTO.getUsername();
 
-            List<Order> orders = orderRepo.findByUser(user);
-            return new ResponseEntity(orders, HttpStatus.OK);
+
+            User user = userRepo.findByUsername(username);
+            Map map = new HashMap<>();
+            map.put("id",user.getId());
+            map.put("First Name", user.getFirstName());
+            map.put("Last Name", user.getLastName());
+            map.put("Username", user.getUsername());
+            map.put("Email", user.getEmail());
+            map.put("Phone number", user.getPhone());
+            map.put("role",user.getRole());
+            Wallet wallet = walletRepo.findByUser(user);
+            if (wallet == null) {
+                map.put("wallet Balance", "no wallet");
+            } else
+                map.put("wallet Balance", wallet.getBalance());
+
+
+            return new ResponseEntity<>(map, HttpStatus.OK);
         } catch (GlobalException e) {
             return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
-        } catch (Exception e) {
-            return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
         }
-    }
 
-    @Transactional
-     public ResponseEntity cancelOrder(int orderId,HttpSession session)
-    {
-        try {
-            if (session.getAttribute("user") == null) {
-                throw new GlobalException("User must login first");
-            }
-            User user = (User) session.getAttribute("user");
-
-            Order order= orderRepo.findById(orderId).orElse(null);
-            if(order==null )
-            {
-                throw new GlobalException("Order not found");
-            }
-            if(order.getUser().getId()!=user.getId() )
-            {
-                throw new GlobalException("This order does not belongs to logged in user");
-            }
-            if(order.getOrderedStatus().equalsIgnoreCase("completed"))
-            {
-                throw new GlobalException("Order delivery completed You cannot cancel");
-            }
-            if(order.getAmountBeforeDiscount()!=order.getTotalAmount())
-            {
-                throw new GlobalException("Promo code applied orders cannot be cancelled");
-            }
-            Wallet wallet=walletRepo.findByUserId(user.getId());
-            wallet.setBalance(wallet.getBalance()+order.getTotalAmount());
-            WalletAudit walletAudit1=new WalletAudit();
-            walletAudit1.setDiffamount("+"+order.getTotalAmount());
-            walletAudit1.setWallet(wallet);
-            walletRepo.save(wallet);
-            walletAuditRepo.save(walletAudit1);
-
-
-            order.setOrderedStatus("Cancelled");
-            OrderStatus orderStatus1=orderStatusRepo.findByOrder(order);
-            orderStatus1.setStatus("Cancelled");
-
-
-            List<OrderedAudit> orderedAuditList=orderedAuditRepo.findAllByOrderId(order.getId());
-            OrderedAudit orderedAudit1=orderedAuditList.get(orderedAuditList.size() - 1);
-
-            System.out.println(orderedAudit1);
-            OrderedAudit orderedAudit2=new OrderedAudit();
-            orderedAudit2.setPresent_status("Cancelled");
-            orderedAudit2.setPrevious_audit(orderedAudit2.getPresent_status());
-            orderedAudit2.setOrder(order);
-
-
-            List<OrderedItems> orderedItemsList=orderedItemsRepo.findAllByOrder(order);
-
-            for (OrderedItems orderedItems1:orderedItemsList)
-            {
-                int productId=orderedItems1.getProduct().getId();
-                Product product=productRepo.findById(productId).orElse(null);
-                product.setStock(product.getStock()+orderedItems1.getQuantity());
-                productRepo.save(product);
-            }
-            orderedAuditRepo.save(orderedAudit2);
-            orderStatusRepo.save(orderStatus1);
-
-            orderRepo.save(order);
-            
-
-            return new ResponseEntity("order cancelled successfully",HttpStatus.OK);
-        } catch (GlobalException e) {
-            return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
-        } catch (Exception e) {
-            return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
-        }
     }
 }

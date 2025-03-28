@@ -1,22 +1,17 @@
 package com.shop.ecommerce.DTO;
 
-import org.springframework.stereotype.Service;
+import lombok.Getter;
+import lombok.Setter;
 
-@Service
-public class AddProductDTO {
+@Getter
+@Setter
+public class CartProductDTO {
+    int id;
     String prod_name;
     double price;
-    int stock;
+    int quantity;
     String description;
-    String imageURL;
-
-    public String getImageURL() {
-        return imageURL;
-    }
-
-    public void setImageURL(String imageURL) {
-        this.imageURL = imageURL;
-    }
+    String image;
 
     public String getProd_name() {
         return prod_name;
@@ -34,12 +29,12 @@ public class AddProductDTO {
         this.price = price;
     }
 
-    public int getStock() {
-        return stock;
+    public int getQuantitiy() {
+        return quantity;
     }
 
-    public void setStock(int stock) {
-        this.stock = stock;
+    public void setQuantity(int quantity) {
+        this.quantity = quantity;
     }
 
     public String getDescription() {
@@ -48,5 +43,16 @@ public class AddProductDTO {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public String getImage() {
+        return image;
+    }
+
+    public void setImageURL(String image) {
+        this.image = image;
+    }
+
+    public CartProductDTO() {
     }
 }

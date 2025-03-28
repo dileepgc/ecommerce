@@ -6,4 +6,5 @@ import org.springframework.stereotype.Component;
 
 @Component
 public interface OrderPromocodeRepo extends JpaRepository<OrderPromocode,Integer> {
+    OrderPromocode findByCode(String orderPromo);
 }
