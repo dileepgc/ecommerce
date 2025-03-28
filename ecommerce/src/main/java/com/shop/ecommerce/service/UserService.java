@@ -1,5 +1,6 @@
 package com.shop.ecommerce.service;
 
+import com.shop.ecommerce.DTO.PlaceOrderDTO;
 import com.shop.ecommerce.DTO.ProdToCart;
 import com.shop.ecommerce.DTO.SignUpDTO;
 import com.shop.ecommerce.DTO.UserLoginDTO;
@@ -8,22 +9,10 @@ import jakarta.servlet.http.HttpSession;
 import org.springframework.http.ResponseEntity;
 
 public interface UserService {
-    public String signUp(SignUpDTO signUpDTO);
-    public String updateUser(User user,int id);
-    public String loginUser(UserLoginDTO userLoginDTO, HttpSession session);
-    public String userLogout(HttpSession session);
-    public boolean isEmailPresent(String email);
-    public String viewwallet( HttpSession session);
-    public Object addproductToCart( ProdToCart pdetails, HttpSession session);
-    public Object doOrder(String address, HttpSession session);
+    public ResponseEntity signUp(SignUpDTO signUpDTO);
+    public ResponseEntity updateUser(User user, String authorizationHeader);
+    public ResponseEntity loginUser(UserLoginDTO userLoginDTO);
+    public ResponseEntity myProfile(String authorizationHeader);
 
-    public ResponseEntity myProfile(HttpSession session);
-
-    ResponseEntity getProdinCart(HttpSession session);
-
-
-    public ResponseEntity getOrders(HttpSession session);
-
-
-    ResponseEntity cancelOrder(int orderId,HttpSession session);
+    public ResponseEntity allusers(String authorizationHeader);
 }

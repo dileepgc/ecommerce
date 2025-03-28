@@ -3,9 +3,10 @@ package com.shop.ecommerce.entity;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
+import org.springframework.stereotype.Component;
 
 import java.util.List;
-
+@Component
 @Entity
 public class User extends Tracking {
     @Id
@@ -13,10 +14,14 @@ public class User extends Tracking {
     private int id;
     private String firstName;
     private String lastName;
-    @JsonProperty("Email")
+
+
     private String email;
     private String password;
     private String role;
+
+    private String username;
+    private long phone;
 
 
     @OneToMany(cascade = CascadeType.ALL,fetch = FetchType.EAGER)
@@ -31,7 +36,22 @@ public class User extends Tracking {
         this.email=email;
     }
 
+    public User(String firstName, String lastName, String password, String role, String email, long phone) {
+        this.firstName=firstName;
+        this.lastName=lastName;
+        this.password=password;
+        this.role=role;
+        this.email=email;
+        this.phone=phone;
+    }
 
+    public long getPhone() {
+        return phone;
+    }
+
+    public void setPhone(long phone) {
+        this.phone = phone;
+    }
 
     public List<Order> getOrd() {
         return ord;
@@ -49,11 +69,14 @@ public class User extends Tracking {
         this.id = id;
     }
 
-
-
-    public void setName(String firstName) {
-        this.firstName = firstName;
+    public String getUsername() {
+        return username;
     }
+
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
 
     public String getEmail() {
         return email;
@@ -119,16 +142,5 @@ public class User extends Tracking {
     public void setWallet(Wallet wallet) {
     }
 
-    @Override
-    public String toString() {
-        return "User{" +
-                "id=" + id +
-                ", firstName='" + firstName + '\'' +
-                ", lastName='" + lastName + '\'' +
-                ", email='" + email + '\'' +
-                ", password='" + password + '\'' +
-                ", role='" + role + '\'' +
-                ", ord=" + ord +
-                '}';
-    }
+
 }

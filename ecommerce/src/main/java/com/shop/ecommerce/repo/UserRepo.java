@@ -6,10 +6,14 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
-
 @Component
 public interface UserRepo extends JpaRepository<User,Integer> {
-     public User findByEmail(String email);
-     @Query("select u from User u where u.is_deleted=false and u.role='user'")
-     public List<User> findByRole();
+    @Query("select u from User u where u.username=?1")
+    User findByUsername(String username);
+
+
+    @Query("select u from User u where u.is_deleted=false and u.role='user'")
+    public List<User> findByRole();
+
+    User findByEmail(String email);
 }

@@ -18,16 +18,6 @@ public class CartItem extends Tracking{
     private Product product;
     private int quantity;
 
-    @Override
-    public String toString() {
-        return "CartItem{" +
-                "id=" + id +
-                ", cart=" + cart +
-                ", product=" + product +
-                ", quantity=" + quantity +
-                '}';
-    }
-
     public int getId() {
         return id;
     }

@@ -57,13 +57,6 @@ public class Category extends Tracking {
         product.setCategory(null);
     }
 
-//    @Override
-//    public String toString() {
-//        return "Category{" +
-//                "cate_id=" + cate_id +
-//                ", cate_name='" + cate_name + '\'' +
-//                ", products=" + products +
-//                '}';
-//    }
+
 
 }
