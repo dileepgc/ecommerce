@@ -9,6 +9,10 @@ import com.shop.ecommerce.service.JWTService;
 import com.shop.ecommerce.service.UserService;
 import jakarta.servlet.http.HttpSession;
 import jakarta.transaction.Transactional;
+
+// import org.hibernate.engine.jdbc.env.internal.LobCreationLogging_.logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -30,6 +34,7 @@ import java.util.regex.Pattern;
 @Component
 
 public class UserServiceimpl implements UserService {
+    public static final Logger logger = LoggerFactory.getLogger(UserServiceimpl.class);
     @Autowired
     UserRepo userRepo;
     //    @Autowired
@@ -169,6 +174,11 @@ public class UserServiceimpl implements UserService {
             if (admin != null && signUpDTO.getRole().equalsIgnoreCase("admin")) {
                 throw new GlobalException("Admin already exists");
             }
+            if (signUpDTO.getPhone() != 0) {
+                if (String.valueOf(signUpDTO.getPhone()).length() != 10) {
+                    throw new GlobalException("Phone number must be 10 digits long");
+                }
+            }
             User user = new User(signUpDTO.getFirstName(), signUpDTO.getLastName(), signUpDTO.getPassword(),
                     signUpDTO.getRole(), signUpDTO.getEmail(), signUpDTO.getPhone());
             userRepo.save(user);
@@ -201,26 +211,24 @@ public class UserServiceimpl implements UserService {
                 userRepo.save(user);
 
             }
-
+            logger.info("User account created successfully");
             return new ResponseEntity<>("User account created", HttpStatus.OK);
-        } catch (GlobalException e) {
+                    } catch (GlobalException e) {
+            logger.error("User account not created");
             return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
         } catch (Exception e) {
+            logger.error("User account not created");
             throw new GlobalException(e.getMessage());
         }
     }
 
     // This method allows a logged-in user to update their profile information (first name, last name, and phone number).
 // It verifies the user's identity using the authorization header and updates the user's details in the database.
+@Transactional
     public ResponseEntity updateUser(User user, String authorizationHeader) {
         try {
             String token = authorizationHeader.replace("Bearer ", "");
             String username = jwtService.extractUserName(token);
-            String role = jwtService.extractRole(token);
-            System.out.println(username);
-            if (!role.equalsIgnoreCase("user"))
-                return new ResponseEntity<>("Access denied",HttpStatus.UNAUTHORIZED);
-
 
             User existingUser = userRepo.findByUsername(username);
             if (existingUser == null) {
@@ -228,12 +236,23 @@ public class UserServiceimpl implements UserService {
             } else {
                 if (user.getFirstName() != null) existingUser.setFirstName(user.getFirstName());
                 if (user.getLastName() != null) existingUser.setLastName(user.getLastName());
-                if (user.getPhone() != 0) existingUser.setPhone(user.getPhone());
+                
+                if (user.getPhone() != 0) {
+                    if (String.valueOf(user.getPhone()).length() != 10) {
+                        throw new GlobalException("Phone number must be 10 digits long");
+                    }
+                    existingUser.setPhone(user.getPhone());
+                }
                 userRepo.save(existingUser);
+                logger.info("User updated successfully");
                 return new ResponseEntity<>("Updated Successfully", HttpStatus.OK);
             }
-        } catch (GlobalException e) {
+            } catch (GlobalException e) {
+            logger.error("User not updated");
             return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
+        } catch (Exception e) {
+            logger.error("User not updated");
+            throw new GlobalException(e.getMessage());
         }
     }
 
@@ -247,10 +266,12 @@ public class UserServiceimpl implements UserService {
                 return new ResponseEntity<>("Access denied", HttpStatus.UNAUTHORIZED);
 
 
-            List<User> userList = userRepo.findAll();
+            List<User> userList = userRepo.findByRoleUser();
+            logger.info("All users retrieved successfully");
             return new ResponseEntity<>(userList, HttpStatus.OK);
 
         } catch (GlobalException e) {
+            logger.error("All users not retrieved");
             return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
         }
     }
@@ -288,11 +309,13 @@ public class UserServiceimpl implements UserService {
                 Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(user.getUsername(), user.getPassword()));
                 if (authentication.isAuthenticated()) {
                     map.put("token", jwtService.generateToken(user.getUsername(), user.getRole()));
+                    logger.info("User logged in successfully");
                     return new ResponseEntity<>(map, HttpStatus.OK);
                 }
             }
             return new ResponseEntity<>("login failed due to wrong password", HttpStatus.UNAUTHORIZED);
-        } catch (GlobalException e) {
+            } catch (GlobalException e) {
+            logger.error("Login failed due to wrong password");
             return new ResponseEntity(e.getMessage(), HttpStatus.UNAUTHORIZED);
         }
     }
@@ -322,10 +345,11 @@ public class UserServiceimpl implements UserService {
                 map.put("wallet Balance", "no wallet");
             } else
                 map.put("wallet Balance", wallet.getBalance());
-
+            logger.info("User profile retrieved successfully");
 
             return new ResponseEntity<>(map, HttpStatus.OK);
-        } catch (GlobalException e) {
+            } catch (GlobalException e) {
+            logger.error("User profile not retrieved");
             return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
         }
 

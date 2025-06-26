@@ -4,6 +4,7 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class AddProductDTO {
+    int prod_id;
     String prod_name;
     double price;
     int stock;
@@ -12,6 +13,12 @@ public class AddProductDTO {
 
     public String getImageURL() {
         return imageURL;
+    }
+    public int getProd_id() {
+        return prod_id;
+    }
+    public void setProd_id(int prod_id) {
+        this.prod_id = prod_id;
     }
 
     public void setImageURL(String imageURL) {

@@ -6,6 +6,6 @@ import org.springframework.stereotype.Component;
 @Component
 public interface WalletService {
     public ResponseEntity topupWallet(String authorizationHeader, int id, double amount);
-    public ResponseEntity getWalletAudit(int userId);
+    public ResponseEntity getWalletAudit(String authorizationHeader);
     public ResponseEntity viewwallet( String authorizationHeader );
 }

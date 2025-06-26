@@ -1,10 +1,16 @@
 package com.shop.ecommerce.restcontroller;
 
-import com.shop.ecommerce.DTO.PlaceOrderDTO;
-import com.shop.ecommerce.service.OrderService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.shop.ecommerce.DTO.PlaceOrderDTO;
+import com.shop.ecommerce.service.OrderService;
 
 @RestController
 public class OrderController {
@@ -30,6 +36,12 @@ public class OrderController {
     {
         return  orderService.getOrders(authorizationHeader);
     }
+    @GetMapping("/fetchallorders")
+    public ResponseEntity getallOrders(@RequestHeader("Authorization") String authorizationHeader)
+    {
+        return  orderService.getAllOrders(authorizationHeader);
+    }
+    
 
     // Endpoint to cancel an order by its ID
     @PostMapping("/cancelorder/{id}")

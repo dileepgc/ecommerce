@@ -16,11 +16,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
 @Service
 public class ProductServiceImpl implements ProductService {
+    public static final Logger logger = LoggerFactory.getLogger(ProductServiceImpl.class);
     @Autowired
     JWTService jwtService;
     @Autowired
@@ -42,7 +45,7 @@ public class ProductServiceImpl implements ProductService {
             if (!role.equalsIgnoreCase("admin"))
                 return new ResponseEntity<>("Access Denied",HttpStatus.UNAUTHORIZED);
 
-            Category category = categoryRepo.findById(id).orElse(null);
+            Category category = categoryRepo.findById(id);
             if (category == null || category.isIs_deleted()) {
                 throw new GlobalException("Category does not exist or deleted");
             }
@@ -66,8 +69,10 @@ public class ProductServiceImpl implements ProductService {
             category.setP(productList);
 
             System.out.println(product.getCategory().getCate_name());
+            logger.info("Product added successfully");
             return new ResponseEntity<>("Product has been added successfully", HttpStatus.OK);
-        } catch (GlobalException e) {
+        } catch (GlobalException  e) {
+            logger.error("Product not added successfully");
             return new ResponseEntity(e.getMessage(), HttpStatus.UNAUTHORIZED);
         }
     }
@@ -88,8 +93,10 @@ public class ProductServiceImpl implements ProductService {
             }
             product.setIs_deleted(true);
             productRepo.save(product);
+            logger.info("Product deleted successfully");
             return new ResponseEntity("Product Deleted", HttpStatus.OK);
         } catch (RuntimeException e) {
+            logger.error("Product not deleted successfully");
             return new ResponseEntity("" + e.getMessage(), HttpStatus.OK);
         }
     }
@@ -111,9 +118,11 @@ public class ProductServiceImpl implements ProductService {
                 productDTO.setImageURL(product.getImage());
                 productDTO.setStock(product.getStock());
                 allProductDTOS.add(productDTO);
-            }
+                }
+            logger.info("All products retrieved successfully");
             return new ResponseEntity<>(allProductDTOS,HttpStatus.OK);
         } catch (RuntimeException e) {
+            logger.error("All products not retrieved successfully");
             return new ResponseEntity(""+e.getMessage(),HttpStatus.OK);
         }
     }
@@ -134,8 +143,10 @@ public class ProductServiceImpl implements ProductService {
             }
             product.setPrice(price);
             productRepo.save(product);
+            logger.info("Price Updated successfully");
             return new ResponseEntity<>("Price Updated successfully",HttpStatus.OK);
-        } catch (RuntimeException e) {
+            } catch (RuntimeException e) {
+            logger.error("Price not updated successfully");
             return new ResponseEntity(e.getMessage(),HttpStatus.OK);
         }
     }
@@ -154,8 +165,10 @@ public class ProductServiceImpl implements ProductService {
             }
             product.setStock( newstock);
             productRepo.save(product);
+            logger.info("Stock updated successfully");
             return new ResponseEntity<>("Stock updated successfully",HttpStatus.OK);
         } catch (RuntimeException e) {
+            logger.error("Stock not updated successfully");
             return new ResponseEntity(""+e.getMessage(),HttpStatus.OK);
         }
     }
@@ -178,8 +191,10 @@ public class ProductServiceImpl implements ProductService {
             productMap.put("stock",product.getStock());
             productMap.put("description",product.getDescription());
             productMap.put("imageURL",product.getImage());
+            logger.info("Product details retrieved successfully");
             return new ResponseEntity(productMap,HttpStatus.OK);
         } catch (GlobalException e) {
+            logger.error("Product not found");
             return new ResponseEntity<>(e.getMessage(),HttpStatus.NOT_FOUND);
         }
     }
@@ -190,7 +205,7 @@ public class ProductServiceImpl implements ProductService {
     {
         try
         {
-            Category category=categoryRepo.findById(cateId).orElse(null);
+            Category category=categoryRepo.findById(cateId);
             if(category==null)
             {
                 throw new GlobalException("category does not exist");
@@ -200,25 +215,34 @@ public class ProductServiceImpl implements ProductService {
             {
                 throw new GlobalException("There are no products in this category");
             }
+            logger.info("Products retrieved successfully");
             return new ResponseEntity(products,HttpStatus.OK);
         } catch (RuntimeException e) {
-            return new ResponseEntity(e.getMessage(),HttpStatus.UNAUTHORIZED);
+            logger.error("Products not retrieved successfully");
+                return new ResponseEntity(e.getMessage(),HttpStatus.UNAUTHORIZED);
         }
     }
-//   public ResponseEntity getProdByName(String name, String authorizationHeader)
-//    {
-//        try
-//        {
-//            Product product=productRepo.findByName();
-//            if(product==null)
-//            {
-//                throw new GlobalException("product does not exist");
-//            }
-//
-//
-//            return new ResponseEntity(product,HttpStatus.OK);
-//        } catch (RuntimeException e) {
-//            return new ResponseEntity(e.getMessage(),HttpStatus.UNAUTHORIZED);
-//        }
-//    }
+  public ResponseEntity getProdByName(String name, String authorizationHeader)
+   {
+       try
+       {
+           Product product=productRepo.findByName(name);
+           if(product==null)
+           {
+            return new ResponseEntity("product does not exist",HttpStatus.OK);
+           }
+           AddProductDTO addProductDTO=new AddProductDTO();
+           addProductDTO.setProd_id(product.getId());
+           addProductDTO.setProd_name(product.getName());
+           addProductDTO.setPrice(product.getPrice());
+           addProductDTO.setStock(product.getStock());
+           addProductDTO.setDescription(product.getDescription());
+           addProductDTO.setImageURL(product.getImage());
+           logger.info("Product retrieved successfully");
+           return new ResponseEntity(addProductDTO,HttpStatus.OK);
+       } catch (RuntimeException e) {
+           logger.error("Product not retrieved successfully");
+           return new ResponseEntity(e.getMessage(),HttpStatus.UNAUTHORIZED);
+       }
+   }
 }

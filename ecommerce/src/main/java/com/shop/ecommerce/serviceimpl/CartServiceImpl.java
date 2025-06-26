@@ -10,6 +10,9 @@ import com.shop.ecommerce.helperclasses.GlobalMethod;
 import com.shop.ecommerce.repo.*;
 import com.shop.ecommerce.service.CartService;
 import com.shop.ecommerce.service.JWTService;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -21,6 +24,7 @@ import java.util.List;
 
 @Service
 public class CartServiceImpl implements CartService {
+    public static final Logger logger = LoggerFactory.getLogger(CartServiceImpl.class);
     @Autowired
     UserRepo userRepo;
     @Autowired
@@ -133,7 +137,7 @@ public class CartServiceImpl implements CartService {
             cartItemRepo.save(cartItem);
             cartItem.setCart(cart);
             cartRepo.save(cart);
-
+            logger.info("Product added successfully");
             return new ResponseEntity<>("Product added successfully", HttpStatus.OK);
 
 
@@ -166,7 +170,7 @@ public class CartServiceImpl implements CartService {
                 productDTO.setImage(cartItem.getProduct().getImage());
                 productlist.add(productDTO);
             }
-
+            logger.info("Products retrieved successfully");
             return new ResponseEntity(productlist, HttpStatus.OK);
         } catch (GlobalException e) {
             return new ResponseEntity(e.getMessage(), HttpStatus.UNAUTHORIZED);
@@ -210,6 +214,7 @@ public class CartServiceImpl implements CartService {
             product.setStock(product.getStock() + quantity);
             productRepo.save(product);
             System.out.println(cart.getCartItem());
+            logger.info("Product removed successfully from cart");
             return new ResponseEntity("Product removed successfully from cart", HttpStatus.OK);
 
         } catch (GlobalException e) {

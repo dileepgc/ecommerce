@@ -1,7 +1,8 @@
 package com.shop.ecommerce.service;
 
-import com.shop.ecommerce.DTO.AddProductDTO;
 import org.springframework.http.ResponseEntity;
+
+import com.shop.ecommerce.DTO.AddProductDTO;
 
 public interface ProductService {
     public ResponseEntity newProduct(int id, AddProductDTO addProductDTO, String authorizationHeader);
@@ -12,5 +13,5 @@ public interface ProductService {
     ResponseEntity getProdDetails(int id);
     ResponseEntity getProdByCate(int cateId);
 
-//    ResponseEntity getProdByName(String name, String authorizationHeader);
+   ResponseEntity getProdByName(String name, String authorizationHeader);
 }

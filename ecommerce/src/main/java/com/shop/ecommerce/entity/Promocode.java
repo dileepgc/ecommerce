@@ -1,10 +1,16 @@
 package com.shop.ecommerce.entity;
 
-import jakarta.persistence.*;
-import org.hibernate.annotations.CreationTimestamp;
+import java.time.LocalDateTime;
+
 import org.springframework.stereotype.Component;
 
-import java.time.LocalDateTime;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.ManyToOne;
 
 @Entity
 @Component
@@ -16,11 +22,14 @@ public class Promocode extends Tracking{
 
     private String code;
     private int discount;
-    @CreationTimestamp
-    private String startTime;
+    
+    private LocalDateTime  startTime;   
+    private LocalDateTime endTime;
 
     private boolean expiredStatus;
+    private String status;
     @ManyToOne
+    @JsonIgnore
     private Product product;
 
     public String getCode() {
@@ -39,11 +48,11 @@ public class Promocode extends Tracking{
         this.discount = discount;
     }
 
-    public String getStartTime() {
+                public LocalDateTime getStartTime() {
         return startTime;
     }
 
-    public void setStartTime(String startTime) {
+    public void setStartTime(LocalDateTime startTime) {
         this.startTime = startTime;
     }
 
@@ -62,4 +71,28 @@ public class Promocode extends Tracking{
     public void setProduct(Product product) {
         this.product = product;
     }
+
+    public LocalDateTime getEndTime() {
+        return endTime;
+    }
+
+    public void setEndTime(LocalDateTime endTime) {
+        this.endTime = endTime;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
+    }
+        
 }

@@ -1,11 +1,15 @@
 package com.shop.ecommerce.entity;
 
+import java.time.LocalDateTime;
+
+import org.springframework.stereotype.Component;
+
+import com.fasterxml.jackson.annotation.JsonFormat;
+
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import org.hibernate.annotations.CreationTimestamp;
-import org.springframework.stereotype.Component;
 
 @Component
 @Entity
@@ -15,9 +19,12 @@ public class OrderPromocode extends Tracking{
     private int id;
     private String code;
     private int discount;
-
-    @CreationTimestamp
-    private String startTime;
+    private double amount;
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    LocalDateTime startTime;
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    LocalDateTime endTime;
+    private String status;
 
     public int getId() {
         return id;
@@ -26,7 +33,14 @@ public class OrderPromocode extends Tracking{
     public void setId(int id) {
         this.id = id;
     }
+    
+    public double getAmount() {
+        return amount;
+    }
 
+    public void setAmount(double amount) {
+        this.amount = amount;
+    }
     public boolean isExpireStatus() {
         return expireStatus;
     }
@@ -54,13 +68,27 @@ public class OrderPromocode extends Tracking{
         this.discount = discount;
     }
 
-    public String getStartTime() {
+    public LocalDateTime getStartTime() {
         return startTime;
     }
 
-    public void setStartTime(String startTime) {
+    public void setStartTime(LocalDateTime startTime) {
         this.startTime = startTime;
     }
 
+    public LocalDateTime getEndTime() {
+        return endTime;
+    }
 
+    public void setEndTime(LocalDateTime endTime) {
+        this.endTime = endTime;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+}
 }

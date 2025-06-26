@@ -15,12 +15,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
 
 @Service
 public class OrderServiceImpl implements OrderService {
+    public static final Logger logger = LoggerFactory.getLogger(OrderServiceImpl.class);
     @Autowired
     JWTService jwtService;
     @Autowired
@@ -105,6 +108,7 @@ public class OrderServiceImpl implements OrderService {
             order.setOrderedStatus(status);
             orderStatusRepo.save(orderStatus);
             orderRepo.save(order);
+            logger.info("Status changed successfully");
 
             return new ResponseEntity<>("Status changed successfully", HttpStatus.OK);
         } catch (GlobalException e) {
@@ -253,12 +257,28 @@ public class OrderServiceImpl implements OrderService {
             cart.setQuantity(0);
             cart.setTotal_amount(0);
             cartRepo.save(cart);
+            OrderStatus orderStatus=new OrderStatus();
+            orderStatus.setOrder(order);
+            orderStatus.setStatus("Placed");
+            orderStatusRepo.save(orderStatus);
+
+            
+            transactionRepo.save(transaction);
+            paymentRepo.save(payment);
+            OrderedAudit orderedAudit=new OrderedAudit();
+            orderedAudit.setOrder(order);
+            orderedAudit.setPresent_status("Placed");
+            orderedAudit.setPrevious_audit("Placed");
+            orderedAuditRepo.save(orderedAudit);
+            walletAuditRepo.save(walletAudit);
+            walletRepo.save(wallet);
+            
 
             result = result + "Order placed successfully";
 
             // Save the order in the order repository
             orderRepo.save(order);
-
+            logger.info("Order placed successfully");
             return new ResponseEntity<>(result, HttpStatus.OK);
 
         } catch (GlobalException e) {
@@ -274,8 +294,7 @@ public class OrderServiceImpl implements OrderService {
         try {
             GlobalMethodDTO globalMethodDTO = globalMethod.adminAccess(authorizationHeader);
             String username = globalMethodDTO.getUsername();
-            if (globalMethodDTO.isAccess())
-                return new ResponseEntity<>("Access Denied", HttpStatus.UNAUTHORIZED);
+            
 
 
             User user = userRepo.findByUsername(username);
@@ -290,18 +309,50 @@ public class OrderServiceImpl implements OrderService {
                 fetchOrderDTO.setOrderedStatus(order.getOrderedStatus());
                 fetchOrderDTO.setName(order.getName());
                 fetchOrderDTO.setAmountBeforeDiscount(order.getAmountBeforeDiscount());
-                System.out.println("++++++++++++++++++++++++++++++++++++++");
                 fetchOrderDTO.setTotalAmount(order.getTotalAmount());
 //                System.out.println(order.getAddress().getAddress());
 //                fetchOrderDTO.setAddress(order.getAddress().getAddress());
                 fetchOrderDTOList.add(fetchOrderDTO);
             }
+            logger.info("Orders retrieved successfully");
 
             return new ResponseEntity(fetchOrderDTOList, HttpStatus.OK);
         } catch (GlobalException e) {
             return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
         }
     }
+
+
+    public ResponseEntity getAllOrders(String authorizationHeader) {
+        try {
+            GlobalMethodDTO globalMethodDTO = globalMethod.adminAccess(authorizationHeader);
+            String username = globalMethodDTO.getUsername();
+            
+            if (!globalMethodDTO.isAccess())
+                return new ResponseEntity<>("Access Denied", HttpStatus.UNAUTHORIZED);
+            List<Order> orders = orderRepo.findAll();
+
+            List<FetchOrderDTO> fetchOrderDTOList=new ArrayList<FetchOrderDTO>();
+            for(Order order:orders)
+            {
+                FetchOrderDTO fetchOrderDTO=new FetchOrderDTO();
+                fetchOrderDTO.setId(order.getId());
+                fetchOrderDTO.setOrderedStatus(order.getOrderedStatus());
+                fetchOrderDTO.setName(order.getName());
+                fetchOrderDTO.setAmountBeforeDiscount(order.getAmountBeforeDiscount());
+                fetchOrderDTO.setTotalAmount(order.getTotalAmount());
+//                System.out.println(order.getAddress().getAddress());
+//                fetchOrderDTO.setAddress(order.getAddress().getAddress());
+                fetchOrderDTOList.add(fetchOrderDTO);
+            }
+            logger.info("All orders retrieved successfully");
+            return new ResponseEntity(fetchOrderDTOList, HttpStatus.OK);
+        } catch (GlobalException e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
+        }
+    }
+
+    
 
     // This method allows a user to cancel their order, provided certain conditions are met.
     // If the order has not been completed or cancelled, it will be marked as 'Cancelled', and the user is refunded.
@@ -348,9 +399,9 @@ public class OrderServiceImpl implements OrderService {
             walletAuditRepo.save(walletAudit1);
 
 
-            order.setOrderedStatus("Cancelled");
+            order.setOrderedStatus("cancelled");
             OrderStatus orderStatus1 = orderStatusRepo.findByOrder(order);
-            orderStatus1.setStatus("Cancelled");
+            orderStatus1.setStatus("cancelled");
 
 
             List<OrderedAudit> orderedAuditList = orderedAuditRepo.findAllByOrderId(order.getId());
@@ -375,7 +426,7 @@ public class OrderServiceImpl implements OrderService {
             orderStatusRepo.save(orderStatus1);
 
             orderRepo.save(order);
-
+            logger.info("Order cancelled successfully");
 
             return new ResponseEntity("order cancelled successfully", HttpStatus.OK);
         } catch (GlobalException e) {
@@ -393,10 +444,12 @@ public class OrderServiceImpl implements OrderService {
 
             User user = userRepo.findById(id).orElse(null);
             if (user == null) {
+                logger.warn("User not found for this id");
                 throw new GlobalException("User not found for this id");
             } else {
                 user.setIs_deleted(true);
                 userRepo.save(user);
+                logger.info("User deleted successfully");
                 return new ResponseEntity<>(" User is deleted", HttpStatus.OK);
             }
         } catch (RuntimeException e) {

@@ -1,10 +1,16 @@
 package com.shop.ecommerce.restcontroller;
 
-import com.shop.ecommerce.service.WalletService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.shop.ecommerce.service.WalletService;
 
 @Component
 @RestController
@@ -21,10 +27,10 @@ public class WalletController {
     }
 
     // Endpoint to get the wallet audit for a specific user
-    @GetMapping("/getwalletaudit/{userid}")
-    public ResponseEntity getWalletAudit ( @PathVariable("userid") int id /*user_id*/ ,@RequestHeader("Authorization") String authorizationHeader )
+    @GetMapping("/getwalletaudit")
+    public ResponseEntity getWalletAudit (@RequestHeader("Authorization") String authorizationHeader )
     {
-        return walletService.getWalletAudit(id);
+        return walletService.getWalletAudit(authorizationHeader);
     }
 
     // Endpoint to view the current balance of the authenticated user's wallet

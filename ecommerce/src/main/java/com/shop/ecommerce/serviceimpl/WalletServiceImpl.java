@@ -1,5 +1,14 @@
 package com.shop.ecommerce.serviceimpl;
 
+import java.util.List;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Service;
+
 import com.shop.ecommerce.DTO.GlobalMethodDTO;
 import com.shop.ecommerce.Exception.GlobalException;
 import com.shop.ecommerce.entity.User;
@@ -11,17 +20,12 @@ import com.shop.ecommerce.repo.WalletAuditRepo;
 import com.shop.ecommerce.repo.WalletRepo;
 import com.shop.ecommerce.service.JWTService;
 import com.shop.ecommerce.service.WalletService;
-import jakarta.transaction.Transactional;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.List;
+import jakarta.transaction.Transactional;
 
 @Service
 public class WalletServiceImpl implements WalletService {
+    public static final Logger logger = LoggerFactory.getLogger(WalletServiceImpl.class);
     @Autowired
     JWTService jwtService;
     @Autowired
@@ -51,14 +55,20 @@ public class WalletServiceImpl implements WalletService {
             if (user == null) {
                 throw new GlobalException("User does not exist to this id");
             }
+            if(amount<0)
+            {
+                throw new GlobalException("Amount cannot be negative");
+            }
             wallet.setBalance(wallet.getBalance() + amount);
             WalletAudit walletAudit1 = new WalletAudit();
             walletAudit1.setWallet(wallet);
             walletAudit1.setDiffamount("+" + amount);
             walletAuditRepo.save(walletAudit1);
             walletRepo.save(wallet);
+            logger.info("Wallet updated successfully");     
             return new ResponseEntity<>("Wallet Updated Successfully", HttpStatus.OK);
         } catch (GlobalException e) {
+            logger.error("Wallet not updated successfully");
             return new ResponseEntity(e.getMessage(), HttpStatus.UNAUTHORIZED);
         }
 
@@ -67,11 +77,14 @@ public class WalletServiceImpl implements WalletService {
     // This method retrieves the wallet audit history for a specific user identified by their userId.
 // It checks if the user's wallet exists and fetches all audit records associated with that wallet.
 // If no audits are found, it returns a message indicating that the wallet has no audit history.
-    public ResponseEntity getWalletAudit(int userId) {
+    public ResponseEntity getWalletAudit(String authorizationHeader) {
         try {
             // Move the wallet retrieval logic below after the role check
-
-            Wallet wallet = walletRepo.findByUserId(userId);
+            GlobalMethodDTO globalMethodDTO=globalMethod.adminAccess(authorizationHeader);
+            String username=globalMethodDTO.getUsername();
+            
+            User user=userRepo.findByUsername(username);
+            Wallet wallet = walletRepo.findByUser(user);
             System.out.println(wallet.getWalletAuditsList());
             if (wallet == null) {
                 return new ResponseEntity<>("wallet does not exist", HttpStatus.NOT_FOUND);
@@ -85,8 +98,10 @@ public class WalletServiceImpl implements WalletService {
 //            for (WalletAudit walletAudit : walletAudits) {
 //                walletAuditList.add(walletAudit.getDiffamount());
 //            }
+            logger.info("Wallet audit retrieved successfully");
             return new ResponseEntity<>(walletAudits, HttpStatus.OK);
         } catch (RuntimeException e) {
+            logger.error("Wallet audit not retrieved successfully");
             return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
@@ -103,8 +118,10 @@ public class WalletServiceImpl implements WalletService {
                 return new ResponseEntity<>("Access Denied", HttpStatus.UNAUTHORIZED);
             User user = userRepo.findByUsername(username);
             Wallet wallet = walletRepo.findByUserId(user.getId());
+            logger.info("Wallet retrieved successfully");
             return new ResponseEntity(" wallet balance is " + wallet.getBalance(), HttpStatus.OK);
         } catch (GlobalException e) {
+            logger.error("Wallet not retrieved successfully");
             return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
         }
     }
